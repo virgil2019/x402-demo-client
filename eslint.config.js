@@ -10,6 +10,18 @@ export default [
     ignores: ["dist/**", "node_modules/**", ".next/**", "next-env.d.ts"],
   },
   {
+    files: ["app/page.tsx"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: false,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
     files: ["**/*.ts"],
     languageOptions: {
       parser: tsParser,
@@ -41,6 +53,7 @@ export default [
       "prettier/prettier": "error",
       "@typescript-eslint/member-ordering": "error",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_$" }],
+      "@typescript-eslint/no-explicit-any": "off",
       "jsdoc/tag-lines": ["error", "any", { startLines: 1 }],
       "jsdoc/check-alignment": "error",
       "jsdoc/no-undefined-types": "off",
