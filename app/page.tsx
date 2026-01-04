@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect } from "wagmi";
 import { parseEther } from "viem";
 import config from "../config.json";
 
@@ -49,8 +49,17 @@ const ERC20_ABI = [
 export default function Home() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { connectors, connect } = useConnect();
   const [approving, setApproving] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
+
+  // Handle wallet connection
+  const handleConnect = (connectorId: any) => {
+    const connector = connectors.find((c) => c.id === connectorId || c.name === connectorId);
+    if (connector) {
+      connect({ connector });
+    }
+  };
 
   // Read current balance
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -195,8 +204,22 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               {!isConnected ? (
-                <div className="px-6 py-3 bg-red-600 rounded-lg font-mono text-white">
-                  Please connect wallet
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {connectors.length > 0 ? (
+                    connectors.map((connector) => (
+                      <button
+                        key={connector.id}
+                        onClick={() => handleConnect(connector.id)}
+                        className="px-6 py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 rounded-lg font-mono transition-colors text-white"
+                      >
+                        Connect {connector.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-6 py-3 bg-red-600 rounded-lg font-mono text-white">
+                      Please connect wallet
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -218,6 +241,9 @@ export default function Home() {
                       ? "Checking approval..."
                       : "Protected API"}
                   </button>
+                  <div className="px-4 py-3 bg-gray-200 rounded-lg font-mono text-sm text-gray-700">
+                    Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+                  </div>
                 </>
               )}
             </div>
