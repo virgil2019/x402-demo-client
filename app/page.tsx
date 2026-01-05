@@ -12,8 +12,10 @@ const TOKEN_ADDRESS: `0x${string}` = "0xe9fC6F3CcD332e84054D8Afd148ecE66BF18C2bA
 const SPENDER_ADDRESS: `0x${string}` = "0xc2983537C79A8f82ce6A7903Fe1F14D4761dBD17";
 const FAUCET_URL = config.faucetUrl || "http://localhost:3001"; // Faucet URL from config
 
-// Allowance threshold: 1 million tokens (with 18 decimals)
+// Allowance threshold for checking: 1 million tokens (with 18 decimals)
 const ALLOWANCE_THRESHOLD = parseEther("1000000");
+// Maximum allowance: uint256.max for unlimited approval
+const MAX_ALLOWANCE = 2n ** 256n - 1n;
 
 // ERC20 ABI - simplified to avoid TypeScript issues
 const ERC20_ABI = [
@@ -52,6 +54,12 @@ export default function Home() {
   const { connectors, connect } = useConnect();
   const [approving, setApproving] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Ensure client-side rendering to avoid hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Handle wallet connection
   const handleConnect = (connectorId: any) => {
@@ -142,6 +150,7 @@ export default function Home() {
 
       // Need to approve
       console.log("Requesting approval transaction...");
+      console.log(`Approving unlimited allowance (uint256.max)...`);
       setNextPath(targetPath);
 
       return new Promise<boolean>((resolve) => {
@@ -150,7 +159,7 @@ export default function Home() {
             address: TOKEN_ADDRESS,
             abi: ERC20_ABI,
             functionName: "approve",
-            args: [SPENDER_ADDRESS, ALLOWANCE_THRESHOLD],
+            args: [SPENDER_ADDRESS, MAX_ALLOWANCE],
           } as any,
           {
             onSuccess: () => {
@@ -203,7 +212,13 @@ export default function Home() {
               Fullstack demo powered by Next.js
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              {!isConnected ? (
+              {!isMounted ? (
+                // Loading state during hydration
+                <div className="px-6 py-3 bg-gray-400 rounded-lg font-mono text-white">
+                  Loading...
+                </div>
+              ) : !isConnected ? (
+                // Not connected state
                 <div className="flex flex-wrap gap-4 justify-center">
                   {connectors.length > 0 ? (
                     connectors.map((connector) => (
@@ -222,6 +237,7 @@ export default function Home() {
                   )}
                 </div>
               ) : (
+                // Connected state
                 <>
                   <button
                     onClick={handleProtectedPageClick}
